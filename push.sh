@@ -2,7 +2,7 @@ ffmpeg \
   -re \
   -v info \
   -stream_loop -1 \
-  -i t.flv \
+  -i video.flv \
   -map 0:a:0 \
   -acodec libopus -ab 128k -ac 2 -ar 48000 \
   -map 0:v:0 \
