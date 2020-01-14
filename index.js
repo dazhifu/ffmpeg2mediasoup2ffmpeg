@@ -21,6 +21,7 @@ const config = require("./config");
   const router = await worker.createRouter({ mediaCodecs });
   const rtpCapabilities = router.rtpCapabilities;
 
+  // comedia后可以不调用connect
   const producerTransport = await router.createPlainRtpTransport({
     listenIp: "127.0.0.1",
     rtcpMux: false,
@@ -45,6 +46,12 @@ const config = require("./config");
       ],
       encodings: [{ ssrc: 22222222 }]
     }
+  });
+
+  // 监听事件
+  // 看ffmpeg是否将流推上来
+  producer.on("sctpstatechange", e => {
+    console.log(e);
   });
 
   const consumerTransport = await router.createPlainRtpTransport({

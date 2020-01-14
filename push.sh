@@ -6,7 +6,7 @@ payload_type=$2
 rtp_port=$3
 rtcp_port=$4
 
-echo ffmpeg \
+ffmpeg \
   -re \
   -v info \
   -stream_loop -1 \
