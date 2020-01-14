@@ -1,10 +1,9 @@
 ffmpeg \
-    -thread_queue_size 10240 \
     -protocol_whitelist "file,udp,rtp" \
     -vcodec copy \
     -y output2.webm \
     -f tee \
-    "[select=v:f=rtp:ssrc=22222222:payload_type=102]rtp://127.0.0.1:10090?rtcpport=10083"
+    "[select=v:f=rtp:ssrc=22222222:payload_type=102]rtp://127.0.0.1:10097?rtcpport=10073"
 
 
 
@@ -20,3 +19,4 @@ ffmpeg \
 #   m=audio ${audio.remoteRtpPort} RTP/AVP 100
 #   a=rtpmap:100 opus/48000/2
 #   a=sendonly
+
