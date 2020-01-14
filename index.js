@@ -118,23 +118,23 @@ const { getPort, releasePort } = require("./port");
       // 监听到调用push.sh
       // 然后调用ffmpeg录制文件
 
-      await consumer.resume();
+      // await consumer.resume();
 
-      const recordInfo = {
-        video: {
-          remoteRtpPort,
-          localRtpPort: consumerRtpPort,
-          localRtcpPort: consumerRtcpPort,
-          rtpCapabilities,
-          rtpParameters: videoProducer.rtpParameters
-        }
-      };
-      recordInfo.fileName = Date.now().toString();
-      const f = new FFmpeg(recordInfo);
-      setTimeout(() => {
-        // 录制5秒kill子进程
-        f.kill();
-      }, 5000);
+      // const recordInfo = {
+      //   video: {
+      //     remoteRtpPort,
+      //     localRtpPort: consumerRtpPort,
+      //     localRtcpPort: consumerRtcpPort,
+      //     rtpCapabilities,
+      //     rtpParameters: videoProducer.rtpParameters
+      //   }
+      // };
+      // recordInfo.fileName = Date.now().toString();
+      // const f = new FFmpeg(recordInfo);
+      // setTimeout(() => {
+      //   // 录制5秒kill子进程
+      //   f.kill();
+      // }, 5000);
     });
   });
 
@@ -154,6 +154,11 @@ const { getPort, releasePort } = require("./port");
 
   const remoteRtpPort = await getPort();
   const remoteRtcpPort = await getPort();
+
+  console.log({
+    remoteRtpPort,
+    remoteRtcpPort
+  });
 
   await consumerTransport.connect({
     ip: "127.0.0.1",
