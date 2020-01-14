@@ -113,8 +113,10 @@ const { getPort, releasePort } = require("./port");
     "videoorientationchange",
     "layerschange"
   ].forEach(item => {
-    videoProducer.observer.on(item, async(e) => {
+    videoProducer.observer.on(item, async e => {
       console.log(item, e);
+      // 监听到调用push.sh
+      // 然后调用ffmpeg录制文件
 
       await consumer.resume();
 
@@ -130,9 +132,9 @@ const { getPort, releasePort } = require("./port");
       recordInfo.fileName = Date.now().toString();
       const f = new FFmpeg(recordInfo);
       setTimeout(() => {
+        // 录制5秒kill子进程
         f.kill();
       }, 5000);
-
     });
   });
 
@@ -152,10 +154,6 @@ const { getPort, releasePort } = require("./port");
 
   const remoteRtpPort = await getPort();
   const remoteRtcpPort = await getPort();
-  console.log({
-    remoteRtpPort,
-    remoteRtcpPort
-  });
 
   await consumerTransport.connect({
     ip: "127.0.0.1",
@@ -187,6 +185,4 @@ const { getPort, releasePort } = require("./port");
       console.log(33, item, e);
     });
   });
-
- 
 })();
