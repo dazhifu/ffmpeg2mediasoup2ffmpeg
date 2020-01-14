@@ -24,7 +24,7 @@ const config = require("./config");
   const producerTransport = await router.createPlainRtpTransport({
     listenIp: "127.0.0.1",
     rtcpMux: false,
-    comedia: true // 开启这个参数似乎就不用调用 connect
+    comedia: true
   });
 
   const producerRtpPort = producerTransport.tuple.localPort;
@@ -60,11 +60,11 @@ const config = require("./config");
 
   const consumer = await consumerTransport.consume({
     producerId: producer.id,
-    rtpCapabilities
-    // paused: true
+    rtpCapabilities,
+    paused: true
   });
 
-  // setTimeout(async () => {
-  //   await consumer.resume();
-  // }, 1000);
+  setTimeout(async () => {
+    await consumer.resume();
+  }, 1000);
 })();
