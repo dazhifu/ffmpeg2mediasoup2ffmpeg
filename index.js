@@ -21,19 +21,46 @@ const config = require("./config");
   const router = await worker.createRouter({ mediaCodecs });
   const rtpCapabilities = router.rtpCapabilities;
 
-  // comedia后可以不调用connect
-  const producerTransport = await router.createPlainRtpTransport({
+  const audioTransport = await router.createPlainRtpTransport({
     listenIp: "127.0.0.1",
     rtcpMux: false,
     comedia: true
   });
 
-  const producerRtpPort = producerTransport.tuple.localPort;
-  console.log({ producerRtpPort });
-  const producerRtcpPort = producerTransport.rtcpTuple.localPort;
-  console.log({ producerRtcpPort });
+  const audioRtpPort = audioTransport.tuple.localPort;
+  const audioRtcpPort = audioTransport.rtcpTuple.localPort;
 
-  const producer = await producerTransport.produce({
+  const videoTransport = await router.createPlainRtpTransport({
+    listenIp: "127.0.0.1",
+    rtcpMux: false,
+    comedia: true
+  });
+
+  const videoRtpPort = videoTransport.tuple.localPort;
+  const videoRtcpPort = videoTransport.rtcpTuple.localPort;
+
+  console.log(
+    `bash push.sh ${audioRtpPort} ${audioRtcpPort} ${videoRtpPort} ${videoRtcpPort}`
+  );
+
+  const audioProducer = await audioTransport.produce({
+    kind: "audio",
+    rtpParameters: {
+      codecs: [
+        {
+          mimeType: "audio/opus",
+          clockRate: 48000,
+          payloadType: 101,
+          channels: 2,
+          rtcpFeedback: [],
+          parameters: { "sprop-stereo": 1 }
+        }
+      ],
+      encodings: [{ ssrc: 11111111 }]
+    }
+  });
+
+  const videoProducer = await videoTransport.produce({
     kind: "video",
     rtpParameters: {
       codecs: [
@@ -48,30 +75,32 @@ const config = require("./config");
     }
   });
 
-  // 监听事件
-  // 看ffmpeg是否将流推上来
-  producer.on("sctpstatechange", e => {
+  videoProducer.on("sctpstatechange", e => {
     console.log(e);
   });
 
-  const consumerTransport = await router.createPlainRtpTransport({
-    listenIp: "127.0.0.1",
-    rtcpMux: false,
-    comedia: true
+  videoProducer.observer.on("trace", e => {
+    console.log(e);
   });
 
-  const consumerRtpPort = consumerTransport.tuple.localPort;
-  console.log({ consumerRtpPort });
-  const consumerRtcpPort = consumerTransport.rtcpTuple.localPort;
-  console.log({ consumerRtcpPort });
+  // const consumerTransport = await router.createPlainRtpTransport({
+  //   listenIp: "127.0.0.1",
+  //   rtcpMux: false,
+  //   comedia: true
+  // });
 
-  const consumer = await consumerTransport.consume({
-    producerId: producer.id,
-    rtpCapabilities,
-    paused: true
-  });
+  // const consumerRtpPort = consumerTransport.tuple.localPort;
+  // console.log({ consumerRtpPort });
+  // const consumerRtcpPort = consumerTransport.rtcpTuple.localPort;
+  // console.log({ consumerRtcpPort });
 
-  setTimeout(async () => {
-    await consumer.resume();
-  }, 1000);
+  // const consumer = await consumerTransport.consume({
+  //   producerId: producer.id,
+  //   rtpCapabilities,
+  //   paused: true
+  // });
+
+  // setTimeout(async () => {
+  //   await consumer.resume();
+  // }, 1000);
 })();
