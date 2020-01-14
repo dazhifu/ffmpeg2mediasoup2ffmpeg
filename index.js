@@ -1,5 +1,7 @@
 const mediasoup = require("mediasoup");
 const config = require("./config");
+const FFmpeg = require("./ffmpeg");
+const { getPort, releasePort } = require("./port");
 
 (async () => {
   const worker = await mediasoup.createWorker({
@@ -23,8 +25,7 @@ const config = require("./config");
 
   const audioTransport = await router.createPlainRtpTransport({
     listenIp: "127.0.0.1",
-    rtcpMux: false,
-    comedia: true
+    rtcpMux: false
   });
 
   const audioRtpPort = audioTransport.tuple.localPort;
@@ -75,32 +76,117 @@ const config = require("./config");
     }
   });
 
-  videoProducer.on("sctpstatechange", e => {
-    console.log(e);
-  });
-
-  videoProducer.observer.on("trace", e => {
-    console.log(e);
-  });
-
-  // const consumerTransport = await router.createPlainRtpTransport({
-  //   listenIp: "127.0.0.1",
-  //   rtcpMux: false,
-  //   comedia: true
+  // videoProducer.on("sctpstatechange", e => {
+  //   console.log(e);
   // });
 
-  // const consumerRtpPort = consumerTransport.tuple.localPort;
-  // console.log({ consumerRtpPort });
-  // const consumerRtcpPort = consumerTransport.rtcpTuple.localPort;
-  // console.log({ consumerRtcpPort });
+  [
+    "close",
+    "newproducer",
+    "newconsumer",
+    "newdataproducer",
+    "newdataconsumer",
+    "trace",
+    "sctpstatechange",
+    "pause",
+    "resume",
+    "score",
+    "videoorientationchange",
+    "layerschange"
+  ].forEach(item => {
+    videoProducer.on(item, e => {
+      console.log(11, item, e);
+    });
+  });
 
-  // const consumer = await consumerTransport.consume({
-  //   producerId: producer.id,
-  //   rtpCapabilities,
-  //   paused: true
-  // });
+  [
+    "close",
+    "newproducer",
+    "newconsumer",
+    "newdataproducer",
+    "newdataconsumer",
+    "trace",
+    "sctpstatechange",
+    "pause",
+    "resume",
+    "score",
+    "videoorientationchange",
+    "layerschange"
+  ].forEach(item => {
+    videoProducer.observer.on(item, async(e) => {
+      console.log(item, e);
 
-  // setTimeout(async () => {
-  //   await consumer.resume();
-  // }, 1000);
+      await consumer.resume();
+
+      const recordInfo = {
+        video: {
+          remoteRtpPort,
+          localRtpPort: consumerRtpPort,
+          localRtcpPort: consumerRtcpPort,
+          rtpCapabilities,
+          rtpParameters: videoProducer.rtpParameters
+        }
+      };
+      recordInfo.fileName = Date.now().toString();
+      const f = new FFmpeg(recordInfo);
+      setTimeout(() => {
+        f.kill();
+      }, 5000);
+
+    });
+  });
+
+  // =============================================================================
+  // =============================================================================
+  // =============================================================================
+  // =============================================================================
+  // =============================================================================
+
+  const consumerTransport = await router.createPlainRtpTransport({
+    listenIp: "127.0.0.1",
+    rtcpMux: false
+  });
+
+  const consumerRtpPort = consumerTransport.tuple.localPort;
+  const consumerRtcpPort = consumerTransport.rtcpTuple.localPort;
+
+  const remoteRtpPort = await getPort();
+  const remoteRtcpPort = await getPort();
+  console.log({
+    remoteRtpPort,
+    remoteRtcpPort
+  });
+
+  await consumerTransport.connect({
+    ip: "127.0.0.1",
+    port: remoteRtpPort,
+    rtcpPort: remoteRtcpPort
+  });
+
+  const consumer = await consumerTransport.consume({
+    producerId: videoProducer.id,
+    rtpCapabilities,
+    paused: true
+  });
+
+  [
+    "close",
+    "newproducer",
+    "newconsumer",
+    "newdataproducer",
+    "newdataconsumer",
+    "trace",
+    "sctpstatechange",
+    "pause",
+    "resume",
+    "score",
+    "videoorientationchange",
+    "layerschange"
+  ].forEach(item => {
+    consumer.on(item, e => {
+      console.log(33, item, e);
+    });
+  });
+
+ 
 })();
