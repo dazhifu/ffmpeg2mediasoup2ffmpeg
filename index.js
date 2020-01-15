@@ -1,6 +1,5 @@
 const mediasoup = require("mediasoup");
 const config = require("./config");
-const FFmpeg = require("./ffmpeg");
 const { getPort, releasePort } = require("./port");
 
 (async () => {
@@ -23,14 +22,6 @@ const { getPort, releasePort } = require("./port");
   const router = await worker.createRouter({ mediaCodecs });
   const rtpCapabilities = router.rtpCapabilities;
 
-  const audioTransport = await router.createPlainRtpTransport({
-    listenIp: "127.0.0.1",
-    rtcpMux: false
-  });
-
-  const audioRtpPort = audioTransport.tuple.localPort;
-  const audioRtcpPort = audioTransport.rtcpTuple.localPort;
-
   const videoTransport = await router.createPlainRtpTransport({
     listenIp: "127.0.0.1",
     rtcpMux: false,
@@ -39,27 +30,6 @@ const { getPort, releasePort } = require("./port");
 
   const videoRtpPort = videoTransport.tuple.localPort;
   const videoRtcpPort = videoTransport.rtcpTuple.localPort;
-
-  console.log(
-    `bash push.sh ${audioRtpPort} ${audioRtcpPort} ${videoRtpPort} ${videoRtcpPort}`
-  );
-
-  const audioProducer = await audioTransport.produce({
-    kind: "audio",
-    rtpParameters: {
-      codecs: [
-        {
-          mimeType: "audio/opus",
-          clockRate: 48000,
-          payloadType: 101,
-          channels: 2,
-          rtcpFeedback: [],
-          parameters: { "sprop-stereo": 1 }
-        }
-      ],
-      encodings: [{ ssrc: 11111111 }]
-    }
-  });
 
   const videoProducer = await videoTransport.produce({
     kind: "video",
@@ -76,65 +46,14 @@ const { getPort, releasePort } = require("./port");
     }
   });
 
-  // videoProducer.on("sctpstatechange", e => {
-  //   console.log(e);
-  // });
+  console.log(`调用推流：bash push.sh ${videoRtpPort} ${videoRtcpPort}`);
 
-  [
-    "close",
-    "newproducer",
-    "newconsumer",
-    "newdataproducer",
-    "newdataconsumer",
-    "trace",
-    "sctpstatechange",
-    "pause",
-    "resume",
-    "score",
-    "videoorientationchange",
-    "layerschange"
-  ].forEach(item => {
-    videoProducer.on(item, e => {
-      console.log(11, item, e);
-    });
-  });
-
-  [
-    "close",
-    "newproducer",
-    "newconsumer",
-    "newdataproducer",
-    "newdataconsumer",
-    "trace",
-    "sctpstatechange",
-    "pause",
-    "resume",
-    "score",
-    "videoorientationchange",
-    "layerschange"
-  ].forEach(item => {
-    videoProducer.observer.on(item, async e => {
-      console.log(item, e);
-      // 监听到调用push.sh
-      // 然后调用ffmpeg录制文件
-
-      // await consumer.resume();
-
-      // const recordInfo = {
-      //   video: {
-      //     remoteRtpPort,
-      //     localRtpPort: consumerRtpPort,
-      //     localRtcpPort: consumerRtcpPort,
-      //     rtpCapabilities,
-      //     rtpParameters: videoProducer.rtpParameters
-      //   }
-      // };
-      // recordInfo.fileName = Date.now().toString();
-      // const f = new FFmpeg(recordInfo);
-      // setTimeout(() => {
-      //   // 录制5秒kill子进程
-      //   f.kill();
-      // }, 5000);
+  ["score"].forEach(item => {
+    videoProducer.on(item, async e => {
+      console.log("videoProducer", item, e);
+      console.log("有流推过来了");
+      await consumer.resume();
+      console.log("开始消费");
     });
   });
 
@@ -155,7 +74,7 @@ const { getPort, releasePort } = require("./port");
   const remoteRtpPort = await getPort();
   const remoteRtcpPort = await getPort();
 
-  console.log({
+  console.log("开启端口来拉流", {
     remoteRtpPort,
     remoteRtcpPort
   });
@@ -172,22 +91,9 @@ const { getPort, releasePort } = require("./port");
     paused: true
   });
 
-  [
-    "close",
-    "newproducer",
-    "newconsumer",
-    "newdataproducer",
-    "newdataconsumer",
-    "trace",
-    "sctpstatechange",
-    "pause",
-    "resume",
-    "score",
-    "videoorientationchange",
-    "layerschange"
-  ].forEach(item => {
+  ["score"].forEach(item => {
     consumer.on(item, e => {
-      console.log(33, item, e);
+      console.log("asdfasdfasdfasdf", item, e);
     });
   });
 })();
