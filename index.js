@@ -46,14 +46,13 @@ const { getPort } = require("./port");
     }
   });
 
-  console.log(`调用推流：bash push.sh ${videoRtpPort} ${videoRtcpPort}`);
+  console.log(`请在控制台调用推流：bash push.sh ${videoRtpPort} ${videoRtcpPort}`);
 
   ["score"].forEach(item => {
     videoProducer.on(item, async e => {
       console.log("videoProducer", item, e);
-      console.log("有流推过来了");
       await consumer.resume();
-      console.log("开始消费");
+      console.log("请修改record.sdp中的端口，然后在控制台调用拉流：bash record.sh");
     });
   });
 
@@ -71,7 +70,7 @@ const { getPort } = require("./port");
   const remoteRtpPort = await getPort();
   const remoteRtcpPort = await getPort();
 
-  console.log("开启端口来拉流", {
+  console.log("这两个端口将用于recrod.sdp", {
     remoteRtpPort,
     remoteRtcpPort
   });
