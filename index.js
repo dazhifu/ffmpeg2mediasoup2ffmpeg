@@ -1,6 +1,6 @@
 const mediasoup = require("mediasoup");
 const config = require("./config");
-const { getPort, releasePort } = require("./port");
+const { getPort } = require("./port");
 
 (async () => {
   const worker = await mediasoup.createWorker({
@@ -67,9 +67,6 @@ const { getPort, releasePort } = require("./port");
     listenIp: "127.0.0.1",
     rtcpMux: false
   });
-
-  const consumerRtpPort = consumerTransport.tuple.localPort;
-  const consumerRtcpPort = consumerTransport.rtcpTuple.localPort;
 
   const remoteRtpPort = await getPort();
   const remoteRtcpPort = await getPort();
